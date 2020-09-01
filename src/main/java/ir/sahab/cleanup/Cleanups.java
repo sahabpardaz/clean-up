@@ -1,6 +1,5 @@
 package ir.sahab.cleanup;
 
-import ir.sahab.extendedinterfaces.RunnableWithException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,9 +12,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A utility class that helps to free up all desired resources and clean-up operations by a single call.
  *
- * <p>It accepts a list of {@link AutoCloseable}(s) and {@link RunnableWithException} statements.
- * Upon calling {@link #doAll()} all {@link AutoCloseable}(s) will be called and
- * all {@link RunnableWithException} statements will be executed.
+ * <p>It accepts a list of {@link AutoCloseable}. Upon calling {@code #doAll()}
+ * all {@link AutoCloseable} will be called.
  *
  * <p>If any exceptions occur during these operations, they will be logged but other operations will
  * not be interrupted. That is, we ensure that all operations, will be performed if it is possible.
@@ -34,7 +32,7 @@ public class Cleanups {
 
     private static final Logger logger = LoggerFactory.getLogger(Cleanups.class);
 
-    private List<RunnableWithException<Exception>> closeStatements = new ArrayList<>();
+    private List<AutoCloseable> closeStatements = new ArrayList<>();
 
     public static Cleanups empty() {
         return new Cleanups();
@@ -53,8 +51,7 @@ public class Cleanups {
     }
 
     public Cleanups and(Collection<? extends AutoCloseable> closeables) {
-        closeables.stream().filter(Objects::nonNull).forEach(
-                (AutoCloseable closeable) -> closeStatements.add(closeable::close));
+        closeables.stream().filter(Objects::nonNull).forEach(closeable -> closeStatements.add(closeable));
         return this;
     }
 
@@ -68,16 +65,25 @@ public class Cleanups {
 
     public void doAll() throws IOException {
         boolean allSucceeded = true;
-        for (RunnableWithException<Exception> closeStatement : closeStatements) {
+        // Probably the first error was the cause of the problem for the rest of the operations and therefore
+        // the most important error to investigate the problem. For this reason, only the first error is
+        // returned after the entire clean-up operations.
+        IOException firstException = null;
+        for (AutoCloseable closeStatement : closeStatements) {
             try {
-                closeStatement.run();
+                closeStatement.close();
             } catch (Exception e) {
                 logger.error("Failed to run clean-up statement.", e);
+                if (firstException == null) {
+                    // Most of te time, the {@code close()} function in which {@link IOException} occurs is used.
+                    // For this reason, we put the catched error in it.
+                    firstException = new IOException("Failed to clean-up all resources.", e);
+                }
                 allSucceeded = false;
             }
         }
         if (!allSucceeded) {
-            throw new IOException("Failed to clean-up all resources.");
+            throw firstException;
         }
     }
 }
