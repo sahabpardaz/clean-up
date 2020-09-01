@@ -11,14 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A utility class that helps to free up all desired resources or do all clean-up operations by a single call.
+ * A utility class that helps to free up all desired resources and clean-up operations by a single call.
  *
  * <p>It accepts a list of {@link AutoCloseable}(s) and {@link RunnableWithException} statements.
  * Upon calling {@link #doAll()} all {@link AutoCloseable}(s) will be called and
  * all {@link RunnableWithException} statements will be executed.
  *
- * <p>If any exceptions occurs during these operations, other operations will not be interrupted.
- * That is, we ensure that all operations, will be performed if it is possible.
+ * <p>If any exceptions occur during these operations, they will be logged but other operations will
+ * not be interrupted. That is, we ensure that all operations, will be performed if it is possible.
  *
  * <p>An example usage may look like this:
  * <pre>
@@ -62,7 +62,7 @@ public class Cleanups {
         try {
             doAll();
         } catch (IOException e) {
-            logger.warn("Failed to clean up all of the given operations.", e);
+            logger.warn("Failed to clean-up all of the given operations.", e);
         }
     }
 
@@ -72,12 +72,12 @@ public class Cleanups {
             try {
                 closeStatement.run();
             } catch (Exception e) {
-                logger.error("Failed to run clean up statement.", e);
+                logger.error("Failed to run clean-up statement.", e);
                 allSucceeded = false;
             }
         }
         if (!allSucceeded) {
-            throw new IOException("Failed to clean up all resources.");
+            throw new IOException("Failed to clean-up all resources.");
         }
     }
 }
