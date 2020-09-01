@@ -71,12 +71,13 @@ public class Cleanups {
 
     /**
      * Does all cleanup operations and if there is an exception on any operation, throws the first
-     * exception after trying for all operations. Probably the first error was the cause of the
-     * problem for the rest of the operations and therefore the most important error to investigate
-     * the problem.
-     * @throws IOException if there is an exception on any operation, wraps it in {@link IOException}
-     *         and returns it. Most of the time, the {@code close()} function in which {@link IOException}
-     *         occurs is used as clean-up operation. For this reason, we wrap the catched error with it.
+     * exception after trying for all operations. We choose the first exception to throw because it
+     * is the most important ones and may be the reason for the next exceptions.
+     * @throws IOException if there is an exception on any operation. It contains the original exception
+     *         as its cause. We choose to throw an exception of type {@link IOException}, because one of
+     *         the main use cases of this class is in implementation of {@code AutoCloseable#close()} methods
+     *         of {@link AutoCloseable} objects where you want to delegate the close operation to the objects
+     *         downstream of the chain.
      */
     public void doAll() throws IOException {
         boolean allSucceeded = true;
