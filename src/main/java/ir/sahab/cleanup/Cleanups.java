@@ -12,19 +12,21 @@ import org.slf4j.LoggerFactory;
 /**
  * A utility class that helps to free up all desired resources and clean-up operations by a single call.
  *
- * <p>It accepts a list of {@link AutoCloseable}. Upon calling {@code #doAll()}
- * all {@link AutoCloseable} will be called.
+ * <p>It accepts a list of {@link AutoCloseable}s and Lamda callbacks. Upon calling {@code #doAll()}
+ * all {@link AutoCloseable}s and Lamda callbacks will be called.
  *
  * <p>If any exceptions occur during these operations, they will be logged but other operations will
  * not be interrupted. That is, we ensure that all operations, will be performed if it is possible.
  *
  * <p>An example usage may look like this:
  * <pre>
- *     Cleanups.of(...)
- *             .and(...)
- *             .and(...)
- *             .and(...)
- *             .doAll();
+ *  cleanups.of(httpServer)     // Calls httpServer.close()
+ *          .and(this::stopWorkingThreads())
+ *          .and(this::cleanTempFolder())
+ *          .and(dbConnection)  // Calls dbConnection.close()
+ *          .doAllQuitely();    // If there is an exception on any operation just logs it.
+ *                              // You can replace it with doAll() then it throws the first exception
+ *                              // after trying for all operations.
  * </pre>
  * </p>
  */
@@ -55,6 +57,10 @@ public class Cleanups {
         return this;
     }
 
+    /**
+     * Does all cleanup operations and if there is an exception on any operation just logs it.
+     * @see {@link #doAll()}
+     */
     public void doAllQuietly() {
         try {
             doAll();
@@ -63,27 +69,31 @@ public class Cleanups {
         }
     }
 
+    /**
+     * Does all cleanup operations and if there is an exception on any operation, throws the first
+     * exception after trying for all operations. Probably the first error was the cause of the
+     * problem for the rest of the operations and therefore the most important error to investigate
+     * the problem.
+     * @throws IOException if there is an exception on any operation, wraps it in {@link IOException}
+     *         and returns it. Most of the time, the {@code close()} function in which {@link IOException}
+     *         occurs is used as clean-up operation. For this reason, we wrap the catched error with it.
+     */
     public void doAll() throws IOException {
         boolean allSucceeded = true;
-        // Probably the first error was the cause of the problem for the rest of the operations and therefore
-        // the most important error to investigate the problem. For this reason, only the first error is
-        // returned after the entire clean-up operations.
-        IOException firstException = null;
+        Exception firstException = null;
         for (AutoCloseable closeStatement : closeStatements) {
             try {
                 closeStatement.close();
             } catch (Exception e) {
                 logger.error("Failed to run clean-up statement.", e);
                 if (firstException == null) {
-                    // Most of te time, the {@code close()} function in which {@link IOException} occurs is used.
-                    // For this reason, we put the catched error in it.
-                    firstException = new IOException("Failed to clean-up all resources.", e);
+                    firstException = e;
                 }
                 allSucceeded = false;
             }
         }
         if (!allSucceeded) {
-            throw firstException;
+            throw new IOException("Failed to clean-up all resources.", firstException);
         }
     }
 }
