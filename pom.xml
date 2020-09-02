@@ -5,9 +5,9 @@
 
     <groupId>ir.sahab</groupId>
     <artifactId>clean-up</artifactId>
-    <name>Clean up</name>
+    <name>Clean-up</name>
     <description>
-        This library helps to free up all desired resources or do all clean-up operations by a single call.
+        This library helps to free up all desired resources and clean-up operations by a single call.
         By using this library, we will make sure that all operations, will be performed if it is possible.
         That means, if any exceptions occurs during clean-up operations of a resource, it will
         not prevent clean-up of other resources.
@@ -19,6 +19,17 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.25</version>
         </dependency>
     </dependencies>
 
