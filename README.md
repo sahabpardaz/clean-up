@@ -22,4 +22,4 @@ Cleanups.of(httpServer)     // Calls httpServer.close()
  ### Add it to your project
 
 You can reference to this library by either of java build systems (Maven, Gradle, SBT or Leiningen) using snippets from this jitpack link:
-[![](https://jitpack.io/v/sahabpardaz/cleanup.svg)](https://jitpack.io/#sahabpardaz/cleanup)
+[![](https://jitpack.io/v/sahabpardaz/clean-up.svg)](https://jitpack.io/#sahabpardaz/clean-up)
